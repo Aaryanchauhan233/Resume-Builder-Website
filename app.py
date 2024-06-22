@@ -1,6 +1,6 @@
 from flask import render_template, url_for, flash, redirect, request, Flask, jsonify
 from forms import RegistrationForm, LoginForm, RequestResetForm, ResetPasswordForm
-from models import app, db, bcrypt, User, mail, Heading, Education, ProfessionalExperience, Skills, Summary, Event, Blog
+from models import app, db, bcrypt, User, mail, Heading, Education, ProfessionalExperience, Skills, Summary, Event, Blog, Review
 from flask_mail import Message
 from flask_login import login_user, current_user, logout_user, login_required
 import secrets, threading
@@ -567,6 +567,73 @@ def delete_blog(blog_id):
     db.session.delete(blog)
     db.session.commit()
     return jsonify({"message": "Blog deleted successfully"}), 200
+
+
+
+@app.route("/reviews", methods=['POST'])
+@login_required
+def create_review():
+    data = request.get_json()
+    new_review = Review(
+        title=data['title'],
+        content=data['content'],
+        rating=data['rating'],
+        user_id=current_user.id
+    )
+    db.session.add(new_review)
+    db.session.commit()
+    return jsonify({"message": "Review created successfully"}), 201
+
+@app.route("/reviews", methods=['GET'])
+@login_required
+def get_reviews():
+    reviews = Review.query.filter_by(user_id=current_user.id).all()
+    reviews_list = [{
+        'id': review.id,
+        'title': review.title,
+        'content': review.content,
+        'rating': review.rating,
+        'date_posted': review.date_posted.strftime('%Y-%m-%d %H:%M:%S')
+    } for review in reviews]
+    return jsonify(reviews_list), 200
+
+@app.route("/reviews/<int:review_id>", methods=['GET'])
+@login_required
+def get_review(review_id):
+    review = Review.query.get_or_404(review_id)
+    if review.user_id != current_user.id:
+        return jsonify({"message": "Permission denied"}), 403
+    review_data = {
+        'id': review.id,
+        'title': review.title,
+        'content': review.content,
+        'rating': review.rating,
+        'date_posted': review.date_posted.strftime('%Y-%m-%d %H:%M:%S')
+    }
+    return jsonify(review_data), 200
+
+@app.route("/reviews/<int:review_id>", methods=['PUT'])
+@login_required
+def update_review(review_id):
+    data = request.get_json()
+    review = Review.query.get_or_404(review_id)
+    if review.user_id != current_user.id:
+        return jsonify({"message": "Permission denied"}), 403
+    review.title = data['title']
+    review.content = data['content']
+    review.rating = data['rating']
+    db.session.commit()
+    return jsonify({"message": "Review updated successfully"}), 200
+
+@app.route("/reviews/<int:review_id>", methods=['DELETE'])
+@login_required
+def delete_review(review_id):
+    review = Review.query.get_or_404(review_id)
+    if review.user_id != current_user.id:
+        return jsonify({"message": "Permission denied"}), 403
+    db.session.delete(review)
+    db.session.commit()
+    return jsonify({"message": "Review deleted successfully"}), 200
 
 
 if __name__ == '__main__':

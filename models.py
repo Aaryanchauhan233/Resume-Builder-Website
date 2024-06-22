@@ -28,8 +28,8 @@ class User(db.Model, UserMixin):
     skills = db.relationship('Skills', backref='user', lazy=True)
     summary = db.relationship('Summary', backref='user', uselist=False)
     events = db.relationship('Event', backref='user', lazy=True)
-    blogs = db.relationship('Blog', backref='user', lazy=True)  # Added blogs relationship
-
+    blogs = db.relationship('Blog', backref='user', lazy=True) 
+    reviews = db.relationship('Review', backref='user', lazy=True)
     def __repr__(self):
         return f"User('{self.name}', '{self.email}')"
 
@@ -106,6 +106,20 @@ class Blog(db.Model):
 
     def __repr__(self):
         return f"Blog('{self.title}', '{self.date_posted}')"
+
+
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    rating = db.Column(db.Integer, nullable=False) 
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f"Review('{self.title}', '{self.date_posted}', '{self.rating}')"
+
+
 
 @login_manager.user_loader
 def load_user(user_id):
