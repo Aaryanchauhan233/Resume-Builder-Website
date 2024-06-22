@@ -27,7 +27,11 @@ class User(db.Model, UserMixin):
     professional_experiences = db.relationship('ProfessionalExperience', backref='user', lazy=True)
     skills = db.relationship('Skills', backref='user', lazy=True)
     summary = db.relationship('Summary', backref='user', uselist=False)
-    events = db.relationship('Event', backref='user', lazy=True)  # Relationship with Event
+    events = db.relationship('Event', backref='user', lazy=True)
+    blogs = db.relationship('Blog', backref='user', lazy=True)  # Added blogs relationship
+
+    def __repr__(self):
+        return f"User('{self.name}', '{self.email}')"
 
 class Heading(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -84,11 +88,24 @@ class Summary(db.Model):
 
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String(500), nullable=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f"Event('{self.title}', '{self.start_time}')"
+
+class Blog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f"Blog('{self.title}', '{self.date_posted}')"
 
 @login_manager.user_loader
 def load_user(user_id):

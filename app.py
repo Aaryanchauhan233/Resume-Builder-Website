@@ -1,6 +1,6 @@
 from flask import render_template, url_for, flash, redirect, request, Flask, jsonify
 from forms import RegistrationForm, LoginForm, RequestResetForm, ResetPasswordForm
-from models import app, db, bcrypt, User, mail, Heading, Education, ProfessionalExperience, Skills, Summary, Event
+from models import app, db, bcrypt, User, mail, Heading, Education, ProfessionalExperience, Skills, Summary, Event, Blog
 from flask_mail import Message
 from flask_login import login_user, current_user, logout_user, login_required
 import secrets, threading
@@ -505,6 +505,68 @@ def delete_event(event_id):
     db.session.commit()
     return jsonify({"message": "Event deleted successfully"}), 200
 
+
+
+@app.route("/blogs", methods=['POST'])
+@login_required
+def create_blog():
+    data = request.get_json()
+    new_blog = Blog(
+        title=data['title'],
+        content=data['content'],
+        user_id=current_user.id
+    )
+    db.session.add(new_blog)
+    db.session.commit()
+    return jsonify({"message": "Blog created successfully"}), 201
+
+@app.route("/blogs", methods=['GET'])
+@login_required
+def get_blogs():
+    blogs = Blog.query.filter_by(user_id=current_user.id).all()
+    blogs_list = [{
+        'id': blog.id,
+        'title': blog.title,
+        'content': blog.content,
+        'date_posted': blog.date_posted.strftime('%Y-%m-%d %H:%M:%S')
+    } for blog in blogs]
+    return jsonify(blogs_list), 200
+
+@app.route("/blogs/<int:blog_id>", methods=['GET'])
+@login_required
+def get_blog(blog_id):
+    blog = Blog.query.get_or_404(blog_id)
+    if blog.user_id != current_user.id:
+        return jsonify({"message": "Permission denied"}), 403
+    blog_data = {
+        'id': blog.id,
+        'title': blog.title,
+        'content': blog.content,
+        'date_posted': blog.date_posted.strftime('%Y-%m-%d %H:%M:%S')
+    }
+    return jsonify(blog_data), 200
+
+@app.route("/blogs/<int:blog_id>", methods=['PUT'])
+@login_required
+def update_blog(blog_id):
+    data = request.get_json()
+    blog = Blog.query.get_or_404(blog_id)
+    if blog.user_id != current_user.id:
+        return jsonify({"message": "Permission denied"}), 403
+    blog.title = data['title']
+    blog.content = data['content']
+    db.session.commit()
+    return jsonify({"message": "Blog updated successfully"}), 200
+
+@app.route("/blogs/<int:blog_id>", methods=['DELETE'])
+@login_required
+def delete_blog(blog_id):
+    blog = Blog.query.get_or_404(blog_id)
+    if blog.user_id != current_user.id:
+        return jsonify({"message": "Permission denied"}), 403
+    db.session.delete(blog)
+    db.session.commit()
+    return jsonify({"message": "Blog deleted successfully"}), 200
 
 
 if __name__ == '__main__':
