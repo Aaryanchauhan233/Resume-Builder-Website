@@ -6,5 +6,5 @@ class Config:
     MAIL_PORT = 587
     MAIL_USE_TLS = True
     MAIL_USERNAME = 'hr168074@gmail.com'
-    MAIL_PASSWORD = 'lebf dzux eiyz qoai'  
+    MAIL_PASSWORD = '*************'  
 
