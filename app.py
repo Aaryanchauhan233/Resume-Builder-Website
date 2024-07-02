@@ -4,7 +4,8 @@ from models import app, db, bcrypt, User, mail, Heading, Education, Professional
 from flask_mail import Message
 from flask_login import login_user, current_user, logout_user, login_required
 import secrets, threading
-from datetime import datetime, timedelta
+import datetime
+from datetime import timedelta
 
 
 
@@ -144,9 +145,11 @@ def account_details():
     }
     return jsonify(detailed_info)
 
-@app.route("/heading", methods=['GET', 'POST', 'PUT', 'DELETE'])
+
+
+@app.route("/heading", methods=['GET', 'POST'])
 @login_required
-def heading():
+def manage_heading():
     if request.method == 'POST':
         data = request.get_json()
         new_heading = Heading(
@@ -175,13 +178,16 @@ def heading():
                 'phone_number': heading.phone_number,
                 'email': heading.email
             }
-            return jsonify(heading_info)
+            return jsonify(heading_info), 200
         else:
             return jsonify({"message": "No heading found"}), 404
 
-    elif request.method == 'PUT':
+@app.route("/heading/<int:heading_id>", methods=['PUT', 'DELETE'])
+@login_required
+def modify_heading(heading_id):
+    if request.method == 'PUT':
         data = request.get_json()
-        heading = Heading.query.filter_by(user_id=current_user.id).first()
+        heading = Heading.query.filter_by(user_id=current_user.id, id=heading_id).first()
         if heading:
             heading.first_name = data['first_name']
             heading.last_name = data['last_name']
@@ -197,7 +203,7 @@ def heading():
             return jsonify({"message": "No heading found"}), 404
 
     elif request.method == 'DELETE':
-        heading = Heading.query.filter_by(user_id=current_user.id).first()
+        heading = Heading.query.filter_by(user_id=current_user.id, id=heading_id).first()
         if heading:
             db.session.delete(heading)
             db.session.commit()
@@ -205,9 +211,11 @@ def heading():
         else:
             return jsonify({"message": "No heading found"}), 404
 
-@app.route("/education", methods=['GET', 'POST', 'PUT', 'DELETE'])
+
+
+@app.route("/education", methods=['GET', 'POST'])
 @login_required
-def education():
+def manage_education():
     if request.method == 'POST':
         data = request.get_json()
         new_education = Education(
@@ -226,25 +234,25 @@ def education():
     elif request.method == 'GET':
         educations = Education.query.filter_by(user_id=current_user.id).all()
         if educations:
-            education_list = []
-            for education in educations:
-                education_info = {
-                    'id': education.id,
-                    'college_name': education.college_name,
-                    'college_location': education.college_location,
-                    'degree': education.degree,
-                    'field_of_study': education.field_of_study,
-                    'grade': education.grade,
-                    'graduation_year': education.graduation_year
-                }
-                education_list.append(education_info)
+            education_list = [{
+                'id': education.id,
+                'college_name': education.college_name,
+                'college_location': education.college_location,
+                'degree': education.degree,
+                'field_of_study': education.field_of_study,
+                'grade': education.grade,
+                'graduation_year': education.graduation_year
+            } for education in educations]
             return jsonify(education_list), 200
         else:
             return jsonify({"message": "No education records found"}), 404
 
-    elif request.method == 'PUT':
+@app.route("/education/<int:education_id>", methods=['PUT', 'DELETE'])
+@login_required
+def modify_education(education_id):
+    if request.method == 'PUT':
         data = request.get_json()
-        education = Education.query.filter_by(user_id=current_user.id, id=data['id']).first()
+        education = Education.query.filter_by(user_id=current_user.id, id=education_id).first()
         if education:
             education.college_name = data['college_name']
             education.college_location = data['college_location']
@@ -259,8 +267,7 @@ def education():
             return jsonify({"message": "No education record found"}), 404
 
     elif request.method == 'DELETE':
-        data = request.get_json()
-        education = Education.query.filter_by(user_id=current_user.id, id=data['id']).first()
+        education = Education.query.filter_by(user_id=current_user.id, id=education_id).first()
         if education:
             db.session.delete(education)
             db.session.commit()
