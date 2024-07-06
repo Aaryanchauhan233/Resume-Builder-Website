@@ -1,6 +1,6 @@
 from flask import render_template, url_for, flash, redirect, request, Flask, jsonify
 from forms import RegistrationForm, LoginForm, RequestResetForm, ResetPasswordForm
-from models import app, db, bcrypt, User, mail, Heading, Education, ProfessionalExperience, Skills, Summary, Event, Blog, Review
+from models import app, db, bcrypt, User, mail, Heading, Education, ProfessionalExperience, Skills, Summary, Event, Blog, Review, Career, Support
 from flask_mail import Message
 from flask_login import login_user, current_user, logout_user, login_required
 import secrets, threading
@@ -641,6 +641,125 @@ def delete_review(review_id):
     db.session.delete(review)
     db.session.commit()
     return jsonify({"message": "Review deleted successfully"}), 200
+
+
+
+@app.route("/career", methods=['GET', 'POST', 'PUT', 'DELETE'])
+@login_required
+def career():
+    if request.method == 'POST':
+        data = request.get_json()
+        new_career = Career(
+            title=data['title'],
+            description=data['description'],
+            requirements=data['requirements'],
+            location=data['location']
+        )
+        db.session.add(new_career)
+        db.session.commit()
+        return jsonify({"message": "Career created successfully"}), 201
+
+    elif request.method == 'GET':
+        careers = Career.query.all()
+        if careers:
+            career_list = []
+            for career in careers:
+                career_info = {
+                    'id': career.id,
+                    'title': career.title,
+                    'description': career.description,
+                    'requirements': career.requirements,
+                    'location': career.location,
+                    'date_created': career.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                    'date_updated': career.date_updated.strftime('%Y-%m-%d %H:%M:%S')
+                }
+                career_list.append(career_info)
+            return jsonify(career_list)
+        else:
+            return jsonify({"message": "No careers found"}), 404
+
+    elif request.method == 'PUT':
+        data = request.get_json()
+        career = Career.query.filter_by(id=data['id']).first()
+        if career:
+            career.title = data['title']
+            career.description = data['description']
+            career.requirements = data['requirements']
+            career.location = data['location']
+            career.date_updated = datetime.utcnow()
+            db.session.commit()
+            return jsonify({"message": "Career updated successfully"}), 200
+        else:
+            return jsonify({"message": "Career not found"}), 404
+
+    elif request.method == 'DELETE':
+        data = request.get_json()
+        career = Career.query.filter_by(id=data['id']).first()
+        if career:
+            db.session.delete(career)
+            db.session.commit()
+            return jsonify({"message": "Career deleted successfully"}), 200
+        else:
+            return jsonify({"message": "Career not found"}), 404
+
+
+
+@app.route("/support", methods=['GET', 'POST', 'PUT', 'DELETE'])
+@login_required
+def support():
+    if request.method == 'POST':
+        data = request.get_json()
+        new_support = Support(
+            user_id=current_user.id,
+            issue=data['issue'],
+            description=data['description'],
+            status=data['status']
+        )
+        db.session.add(new_support)
+        db.session.commit()
+        return jsonify({"message": "Support ticket created successfully"}), 201
+
+    elif request.method == 'GET':
+        supports = Support.query.filter_by(user_id=current_user.id).all()
+        if supports:
+            support_list = []
+            for support in supports:
+                support_info = {
+                    'id': support.id,
+                    'issue': support.issue,
+                    'description': support.description,
+                    'status': support.status,
+                    'date_created': support.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                    'date_updated': support.date_updated.strftime('%Y-%m-%d %H:%M:%S')
+                }
+                support_list.append(support_info)
+            return jsonify(support_list)
+        else:
+            return jsonify({"message": "No support tickets found"}), 404
+
+    elif request.method == 'PUT':
+        data = request.get_json()
+        support = Support.query.filter_by(user_id=current_user.id, id=data['id']).first()
+        if support:
+            support.issue = data['issue']
+            support.description = data['description']
+            support.status = data['status']
+            support.date_updated = datetime.utcnow()
+            db.session.commit()
+            return jsonify({"message": "Support ticket updated successfully"}), 200
+        else:
+            return jsonify({"message": "Support ticket not found"}), 404
+
+    elif request.method == 'DELETE':
+        data = request.get_json()
+        support = Support.query.filter_by(user_id=current_user.id, id=data['id']).first()
+        if support:
+            db.session.delete(support)
+            db.session.commit()
+            return jsonify({"message": "Support ticket deleted successfully"}), 200
+        else:
+            return jsonify({"message": "Support ticket not found"}), 404
+
 
 
 if __name__ == '__main__':

@@ -30,6 +30,7 @@ class User(db.Model, UserMixin):
     events = db.relationship('Event', backref='user', lazy=True)
     blogs = db.relationship('Blog', backref='user', lazy=True) 
     reviews = db.relationship('Review', backref='user', lazy=True)
+    supports = db.relationship('Support', backref='user', lazy=True)
     def __repr__(self):
         return f"User('{self.name}', '{self.email}')"
 
@@ -107,7 +108,6 @@ class Blog(db.Model):
     def __repr__(self):
         return f"Blog('{self.title}', '{self.date_posted}')"
 
-
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
@@ -119,7 +119,30 @@ class Review(db.Model):
     def __repr__(self):
         return f"Review('{self.title}', '{self.date_posted}', '{self.rating}')"
 
+class Support(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    issue = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='Open')
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    date_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref='support_tickets')
 
+    def __repr__(self):
+        return f"Support('{self.issue}', '{self.status}')"
+
+class Career(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    requirements = db.Column(db.Text, nullable=False)
+    location = db.Column(db.String(100), nullable=False)
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    date_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"Career('{self.title}', '{self.location}')"
 
 @login_manager.user_loader
 def load_user(user_id):
