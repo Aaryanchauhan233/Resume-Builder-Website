@@ -28,9 +28,10 @@ class User(db.Model, UserMixin):
     skills = db.relationship('Skills', backref='user', lazy=True)
     summary = db.relationship('Summary', backref='user', uselist=False)
     events = db.relationship('Event', backref='user', lazy=True)
-    blogs = db.relationship('Blog', backref='user', lazy=True) 
+    blogs = db.relationship('Blog', backref='user', lazy=True)
     reviews = db.relationship('Review', backref='user', lazy=True)
-    supports = db.relationship('Support', backref='user', lazy=True)
+    supports = db.relationship('Support', backref='user_support', lazy=True)  # Changed backref name
+
     def __repr__(self):
         return f"User('{self.name}', '{self.email}')"
 
@@ -127,7 +128,7 @@ class Support(db.Model):
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     date_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User', backref='support_tickets')
+    user = db.relationship('User', backref='support_tickets')  # Changed backref name
 
     def __repr__(self):
         return f"Support('{self.issue}', '{self.status}')"

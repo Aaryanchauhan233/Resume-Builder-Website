@@ -137,8 +137,8 @@ def account_details():
         'name': current_user.name,
         'email': current_user.email,
         'role': current_user.role,
-        'heading_link': url_for('heading', _external=True),
-        'education_link': url_for('education', _external=True),
+        'heading_link': url_for('manage_heading', _external=True),
+        'education_link': url_for('manage_education', _external=True),
         'professional_experience_link': url_for('professional_experience', _external=True),
         'skills_link': url_for('skills', _external=True),
         'summary_link': url_for('summary', _external=True)
@@ -686,7 +686,7 @@ def career():
             career.description = data['description']
             career.requirements = data['requirements']
             career.location = data['location']
-            career.date_updated = datetime.utcnow()
+            career.date_updated = datetime.datetime.utcnow()
             db.session.commit()
             return jsonify({"message": "Career updated successfully"}), 200
         else:
@@ -744,7 +744,7 @@ def support():
             support.issue = data['issue']
             support.description = data['description']
             support.status = data['status']
-            support.date_updated = datetime.utcnow()
+            support.date_updated = datetime.datetime.utcnow()
             db.session.commit()
             return jsonify({"message": "Support ticket updated successfully"}), 200
         else:
